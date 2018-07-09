@@ -154,6 +154,8 @@ def download_coverage_artifacts(build_task_id, suites, platforms, artifacts_path
         assert status in ALL_STATUSES, "State '{}' not recognized".format(status)
 
         while status not in FINISHED_STATUSES:
+            sys.stdout.write('\rWaiting for task {} to finish...'.format(test_task['status']['taskId']))
+            sys.stdout.flush()
             time.sleep(60)
             status = get_task_status(test_task['status']['taskId'])
             assert status in ALL_STATUSES
