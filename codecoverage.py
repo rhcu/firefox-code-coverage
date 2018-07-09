@@ -114,7 +114,7 @@ def get_platform(task_name):
 
 
 def get_task_status(task_id):
-    status = get_json('https://queue.taskcluster.net/v1/' + 'task/{}/status'.format(task_id))
+    status = get_json('https://queue.taskcluster.net/v1/task/{}/status'.format(task_id))
     return status['status']['state']
 
 
