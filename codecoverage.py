@@ -19,7 +19,8 @@ except ImportError:
 
 
 TEST_PLATFORMS = ['test-linux64-ccov/debug', 'test-windows10-64-ccov/debug']
-ALL_STATUSES = ['completed', 'failed', 'exception', 'unscheduled', 'pending', 'running']
+FINISHED_STATUSES = ['completed', 'failed', 'exception']
+ALL_STATUSES = FINISHED_STATUSES + ['unscheduled', 'pending', 'running']
 STATUS_VALUE = {
     'exception': 1,
     'failed': 2,
@@ -112,6 +113,11 @@ def get_platform(task_name):
         raise Exception('Unknown platform')
 
 
+def get_task_status(task_id):
+    status = get_json('https://queue.taskcluster.net/v1/' + 'task/{}/status'.format(task_id))
+    return status['status']['state']
+
+
 def download_coverage_artifacts(build_task_id, suites, platforms, artifacts_path, suites_to_ignore=['talos', 'awsy']):
     try:
         os.mkdir(artifacts_path)
@@ -145,8 +151,12 @@ def download_coverage_artifacts(build_task_id, suites, platforms, artifacts_path
 
     for test_task in test_tasks:
         status = test_task['status']['state']
-
         assert status in ALL_STATUSES, "State '{}' not recognized".format(status)
+
+        while status not in FINISHED_STATUSES:
+            time.sleep(60)
+            status = get_task_status(test_task['status']['taskId'])
+            assert status in ALL_STATUSES
 
         chunk_name = get_chunk(test_task['task']['metadata']['name'])
         platform_name = get_platform(test_task['task']['metadata']['name'])
